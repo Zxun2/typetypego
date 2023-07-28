@@ -45,7 +45,8 @@ class SocketMethods {
       );
 
       if (data['_id'].isNotEmpty && !_isPlaying) {
-        Navigator.pushNamed(context, '/game-screen');
+        Navigator.pushNamedAndRemoveUntil(
+            context, '/game-screen', (route) => true);
         _isPlaying = true;
       }
     });
@@ -71,6 +72,15 @@ class SocketMethods {
       'timer',
       {
         'playerId': playerId,
+        'gameID': gameID,
+      },
+    );
+  }
+
+  restartTimer(gameID) {
+    _client.emit(
+      'restart-timer',
+      {
         'gameID': gameID,
       },
     );

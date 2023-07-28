@@ -24,6 +24,7 @@ class Sentence extends StatefulWidget {
 class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
   final FocusNode focusNode = FocusNode();
   final SocketMethods _socketMethods = SocketMethods();
+  int currentWordIndex = 0;
 
   static const Duration cursorFadeDuration = Duration(milliseconds: 750);
   late final AnimationController cursorAnimation = AnimationController(
@@ -73,27 +74,27 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
         !typingContext.currentWord.startsWith(typingContext.enteredText);
     final gameData = Provider.of<GameStateProvider>(context);
 
-    print(gameData.gameState['isOver']);
-    if (gameData.gameState['isOver']) {
-      isTestEnabled = false;
-    }
-
     return InputListener(
       focusNode: focusNode,
-      enabled: isTestEnabled,
+      enabled: !gameData.gameState['isOver'],
       onSpacePressed: () {
         setState(() {
           bool isEnd = typingContext.onSpacePressed();
-          _socketMethods.sendUserInput(
-            typingContext.currentWordIndex,
-            typingContext.getTypedWordCount(),
-            gameData.gameState["id"],
-          );
+          if (currentWordIndex == typingContext.words.length - 1) {
+            currentWordIndex = typingContext.currentWordIndex + 1;
+          } else {
+            currentWordIndex = typingContext.currentWordIndex;
+          }
           if (isEnd) {
             isTestEnabled = false;
           }
           resetCursor();
         });
+        _socketMethods.sendUserInput(
+          currentWordIndex,
+          typingContext.getTypedWordCount(),
+          gameData.gameState["id"],
+        );
       },
       onCtrlBackspacePressed: () {
         if (typingContext.deleteFullWord()) {
@@ -170,7 +171,7 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
                       ),
                       Positioned.fill(
                         child: AnimatedOpacity(
-                          opacity: isTestEnabled ? 0 : 1,
+                          opacity: !gameData.gameState['isOver'] ? 0 : 1,
                           duration: const Duration(milliseconds: 300),
                           child: Container(
                             height: 300,
@@ -184,21 +185,6 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  // const SizedBox(height: 16),
-                  // Wrap(
-                  //   spacing: 8,
-                  //   children: [
-                  //     OutlinedButton.icon(
-                  //       label: const Text('Restart (tab + enter)'),
-                  //       icon: const Icon(Icons.refresh),
-                  //       onPressed: () {
-                  //         setState(() {
-                  //           refreshTypingContext();
-                  //         });
-                  //       },
-                  //     ),
-                  //   ],
-                  // ),
                 ],
               ),
             ],

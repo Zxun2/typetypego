@@ -7,8 +7,8 @@ class SocketClient {
 
   SocketClient._internal() {
     socket = io(
-        'https://typetypego-server.onrender.com',
-        // 'http://localhost:3000',
+        // 'https://typetypego-server.onrender.com',
+        'http://localhost:3000',
         <String, dynamic>{
           'transports': ['websocket'],
           'autoConnect': false,

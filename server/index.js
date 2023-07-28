@@ -15,6 +15,8 @@ app.use(express.json()); // for parsing application/json
 
 const db = process.env.DATABASE;
 
+let timerId;
+
 io.on('connection', (socket) => {
   socket.on('create-game', async ({ nickname }) => {
     try {
@@ -66,6 +68,26 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('restart-timer', async ({ gameID }) => {
+    try {
+      let game = await Game.findById(gameID);
+      const sentence = await getSentence();
+      game.sentence = sentence;
+      game.isOver = false;
+      game.players.forEach((p) => {
+        p.typedWords = 0;
+        p.WPM = -1;
+        p.currentWordIndex = 0;
+      });
+
+      game.startTime = game = await game.save();
+      await startGameClock(gameID);
+      io.to(gameID).emit('update-game', game);
+    } catch (e) {
+      console.log(e);
+    }
+  });
+
   socket.on('timer', async ({ playerId, gameID }) => {
     let game;
     let player;
@@ -81,27 +103,25 @@ io.on('connection', (socket) => {
     }
 
     // only the party leader can start the game
-    if (player.isPartyLeader) {
-      let timerId = setInterval(async () => {
-        if (countDown >= 0) {
-          io.to(gameID).emit('timer', {
-            countDown,
-            msg: 'Game Starting in...',
-          });
-          console.log(countDown);
-          countDown--;
-        } else {
-          game.isJoin = false;
-          game = await game.save();
+    let timer = setInterval(async () => {
+      if (countDown >= 0) {
+        io.to(gameID).emit('timer', {
+          countDown,
+          msg: 'Game Starting in...',
+        });
+        console.log(countDown);
+        countDown--;
+      } else {
+        game.isJoin = false;
+        await game.save();
+        await startGameClock(gameID);
 
-          io.to(gameID).emit('update-game-state', game);
-          startGameClock(gameID);
+        io.to(gameID).emit('update-game-state', game);
 
-          // stop the timer
-          clearInterval(timerId);
-        }
-      }, 1000);
-    }
+        // stop the timer
+        clearInterval(timer);
+      }
+    }, 1000);
   });
 
   socket.on('user-input', async ({ currentWordIndex, typedWordCount, gameID }) => {
@@ -113,15 +133,31 @@ io.on('connection', (socket) => {
       player.currentWordIndex = currentWordIndex;
       player.typedWords = typedWordCount;
 
-      if (player.currentWordIndex < game.words.length - 1) {
-        game = await game.save();
+      if (player.currentWordIndex < game.words.length) {
+        await game.save();
         io.to(gameID).emit('update-game-state', game);
       } else {
         let endTime = new Date().getTime();
         let startTime = game.startTime;
+        console.log('Computing WPM for player...');
         player.WPM = calculateWPM(endTime, startTime, typedWordCount);
-        game = await game.save();
-        socket.emit('done');
+
+        // check if all players have their wpm calculated
+        isOver = true;
+        game.players.forEach((player) => {
+          if (player.WPM === -1) {
+            isOver = false;
+          }
+        });
+
+        if (isOver) {
+          console.log('All players have finished. Game over.');
+          game.isOver = true;
+        }
+
+        await game.save();
+        isOver ? io.to(gameID).emit('done') : socket.emit('done');
+        clearInterval(timerId);
         io.to(gameID).emit('update-game-state', game);
       }
     }
@@ -134,39 +170,36 @@ const startGameClock = async (gameID) => {
   game.startTime = new Date().getTime();
   game = await game.save();
 
-  let timerId = setInterval(
-    (function gameIntervalFunc() {
-      if (time >= 0) {
-        const timeFormat = calculateTime(time);
-        io.to(gameID).emit('timer', {
-          countDown: timeFormat,
-          msg: 'Time Remaining',
-        });
-        time--;
-      } else {
-        (async () => {
-          try {
-            let endTime = new Date().getTime();
-            let game = await Game.findById(gameID);
-            game.isOver = true;
-            game.players.forEach((player) => {
-              if (player.WPM === -1) {
-                player.WPM = calculateWPM(endTime, game.startTime, player.typedWords);
-              }
-            });
-            game = await game.save();
-            io.to(gameID).emit('done');
-            io.to(gameID).emit('update-game-state', game);
-            clearInterval(timerId);
-          } catch (e) {
-            console.log(e);
-          }
-        })();
-      }
-      return gameIntervalFunc;
-    })(),
-    1000
-  );
+  timerId = setInterval(() => {
+    if (time >= 0) {
+      const timeFormat = calculateTime(time);
+      io.to(gameID).emit('timer', {
+        countDown: timeFormat,
+        msg: 'Time Remaining',
+      });
+      console.log(time);
+      time--;
+    } else {
+      (async () => {
+        try {
+          let endTime = new Date().getTime();
+          let game = await Game.findById(gameID);
+          game.isOver = true;
+          game.players.forEach((player) => {
+            if (player.WPM === -1) {
+              player.WPM = calculateWPM(endTime, game.startTime, player.typedWords);
+            }
+          });
+          game = await game.save();
+          io.to(gameID).emit('done');
+          io.to(gameID).emit('update-game-state', game);
+          clearInterval(timerId);
+        } catch (e) {
+          console.log(e);
+        }
+      })();
+    }
+  }, 1000);
 };
 
 mongoose

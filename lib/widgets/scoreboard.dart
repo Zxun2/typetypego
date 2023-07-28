@@ -22,7 +22,6 @@ class _ScoreboardState extends State<Scoreboard> {
   @override
   Widget build(BuildContext context) {
     final game = Provider.of<GameStateProvider>(context);
-    print(game.gameState['players']);
 
     return ConstrainedBox(
       constraints: const BoxConstraints(
@@ -32,7 +31,6 @@ class _ScoreboardState extends State<Scoreboard> {
         itemCount: game.gameState['players'].length,
         itemBuilder: (context, index) {
           var playerData = game.gameState['players'][index];
-          print(playerData['nickname']);
           return ListTile(
             title: Text(
               playerData['nickname'],
