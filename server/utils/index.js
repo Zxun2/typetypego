@@ -1,13 +1,10 @@
 const axios = require('axios');
 
 const getSentence = async () => {
-  // const jokeData = await axios
-  //   .get('https://api.quotable.io/quotes/random?minLength=100&maxLength=150')
-  //   .then((res) => res.data[0].content.split(' '));
-  // return jokeData;
-  return 'Kindness in words creates confidence. You are ultra gay but i am okay with that. Please do not do that again though.'.split(
-    ' '
-  );
+  const jokeData = await axios
+    .get('https://api.quotable.io/quotes/random?minLength=100&maxLength=150')
+    .then((res) => res.data[0].content.split(' '));
+  return jokeData;
 };
 
 const calculateTime = (time) => {

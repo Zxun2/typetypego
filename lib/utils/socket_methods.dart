@@ -53,7 +53,7 @@ class SocketMethods {
 
   notCorrectGameListener(BuildContext context) {
     _client.on(
-      'not-correct-game',
+      'error',
       (data) => ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red,

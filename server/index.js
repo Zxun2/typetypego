@@ -43,7 +43,7 @@ io.on('connection', (socket) => {
   socket.on('join-game', async ({ nickname, gameId }) => {
     try {
       if (!gameId.match(/^[0-9a-fA-F]{24}$/)) {
-        socket.emit('not-correct-game', 'Please enter a valid game ID');
+        socket.emit('error', 'Please enter a valid game ID');
         return;
       }
       let game = await Game.findById(gameId);
@@ -59,7 +59,7 @@ io.on('connection', (socket) => {
         game = await game.save();
         io.to(gameId).emit('update-game', game);
       } else {
-        socket.emit('not-correct-game', 'The game is currently in progress, please try again later!');
+        socket.emit('error', 'The game is currently in progress, please try again later!');
       }
     } catch (e) {
       console.log(e);
@@ -77,7 +77,7 @@ io.on('connection', (socket) => {
       game = await Game.findById(gameID);
       player = game.players.id(playerId);
     } catch (e) {
-      socket.emit('not-correct-game', e.message);
+      socket.emit('error', e.message);
     }
 
     // only the party leader can start the game
@@ -118,7 +118,7 @@ io.on('connection', (socket) => {
         io.to(gameID).emit('update-game-state', game);
       } else {
         let endTime = new Date().getTime();
-        let { startTime } = game;
+        let startTime = game.startTime;
         player.WPM = calculateWPM(endTime, startTime, typedWordCount);
         game = await game.save();
         socket.emit('done');
