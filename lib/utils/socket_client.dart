@@ -6,10 +6,13 @@ class SocketClient {
   static SocketClient? _instance;
 
   SocketClient._internal() {
-    socket = io('http://localhost:3000', <String, dynamic>{
-      'transports': ['websocket'],
-      'autoConnect': false,
-    });
+    socket = io(
+        'https://typetypego-server.onrender.com',
+        // 'http://localhost:3000',
+        <String, dynamic>{
+          'transports': ['websocket'],
+          'autoConnect': false,
+        });
     socket!.connect();
   }
 
