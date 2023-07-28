@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:typeracer/providers/game_state_provider.dart';
-import 'package:typeracer/utils/socket_methods.dart';
+import 'package:typetypego/providers/game_state_provider.dart';
+import 'package:typetypego/utils/socket_methods.dart';
 
 class Scoreboard extends StatefulWidget {
   const Scoreboard({Key? key}) : super(key: key);

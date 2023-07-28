@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:typeracer/widgets/word_generator.dart';
+import 'package:typetypego/widgets/word_generator.dart';
 
 class TypedWord {
   const TypedWord.correct(this.value)

@@ -1,4 +1,4 @@
-# typeracer
+# typetypego
 
 A new Flutter project.
 

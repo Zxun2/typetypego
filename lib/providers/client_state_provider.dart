@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:typeracer/models/client_state.dart';
+import 'package:typetypego/models/client_state.dart';
 
 class ClientStateProvider extends ChangeNotifier {
   ClientState _clientState = ClientState(

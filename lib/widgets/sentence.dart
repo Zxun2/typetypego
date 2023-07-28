@@ -3,13 +3,13 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:typeracer/models/typing_state.dart';
-import 'package:typeracer/providers/game_state_provider.dart';
-import 'package:typeracer/theme/theme_data.dart';
-import 'package:typeracer/utils/socket_methods.dart';
-import 'package:typeracer/widgets/input_listener.dart';
-import 'package:typeracer/widgets/scoreboard.dart';
-import 'package:typeracer/widgets/word_generator.dart';
+import 'package:typetypego/models/typing_state.dart';
+import 'package:typetypego/providers/game_state_provider.dart';
+import 'package:typetypego/theme/theme_data.dart';
+import 'package:typetypego/utils/socket_methods.dart';
+import 'package:typetypego/widgets/input_listener.dart';
+import 'package:typetypego/widgets/scoreboard.dart';
+import 'package:typetypego/widgets/word_generator.dart';
 
 class Sentence extends StatefulWidget {
   final List<dynamic> words;

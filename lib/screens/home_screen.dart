@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:typeracer/theme/theme_data.dart';
-import 'package:typeracer/widgets/custom_button.dart';
+import 'package:typetypego/theme/theme_data.dart';
+import 'package:typetypego/widgets/custom_button.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({Key? key}) : super(key: key);

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:typeracer/models/game_state.dart';
+import 'package:typetypego/models/game_state.dart';
 
 class GameStateProvider extends ChangeNotifier {
   GameState _gameState = GameState(

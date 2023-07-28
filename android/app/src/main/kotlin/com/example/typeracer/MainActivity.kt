@@ -1,4 +1,4 @@
-package com.example.typeracer
+package com.example.typetypego
 
 import io.flutter.embedding.android.FlutterActivity
 

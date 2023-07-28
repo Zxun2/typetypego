@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:typeracer/providers/client_state_provider.dart';
-import 'package:typeracer/providers/game_state_provider.dart';
-import 'package:typeracer/screens/create_screen.dart';
-import 'package:typeracer/screens/game_screen.dart';
-import 'package:typeracer/screens/home_screen.dart';
-import 'package:typeracer/screens/join_screen.dart';
-import 'package:typeracer/theme/theme_data.dart';
+import 'package:typetypego/providers/client_state_provider.dart';
+import 'package:typetypego/providers/game_state_provider.dart';
+import 'package:typetypego/screens/create_screen.dart';
+import 'package:typetypego/screens/game_screen.dart';
+import 'package:typetypego/screens/home_screen.dart';
+import 'package:typetypego/screens/join_screen.dart';
+import 'package:typetypego/theme/theme_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
           debugShowCheckedModeBanner: false,
-          title: 'Typeracer',
+          title: 'typetypego',
           theme: ThemeApp.theme,
           initialRoute: '/',
           routes: {

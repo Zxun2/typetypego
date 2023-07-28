@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:typeracer/utils/socket_methods.dart';
-import 'package:typeracer/widgets/custom_button.dart';
-import 'package:typeracer/widgets/custom_textfield.dart';
+import 'package:typetypego/utils/socket_methods.dart';
+import 'package:typetypego/widgets/custom_button.dart';
+import 'package:typetypego/widgets/custom_textfield.dart';
 
 class CreateRoomScreen extends StatefulWidget {
   const CreateRoomScreen({super.key});

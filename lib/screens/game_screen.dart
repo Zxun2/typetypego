@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:typeracer/providers/client_state_provider.dart';
-import 'package:typeracer/providers/game_state_provider.dart';
-import 'package:typeracer/theme/theme_data.dart';
-import 'package:typeracer/utils/socket_client.dart';
-import 'package:typeracer/utils/socket_methods.dart';
-import 'package:typeracer/widgets/sentence.dart';
+import 'package:typetypego/providers/client_state_provider.dart';
+import 'package:typetypego/providers/game_state_provider.dart';
+import 'package:typetypego/theme/theme_data.dart';
+import 'package:typetypego/utils/socket_client.dart';
+import 'package:typetypego/utils/socket_methods.dart';
+import 'package:typetypego/widgets/sentence.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({Key? key}) : super(key: key);
