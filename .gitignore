@@ -52,4 +52,9 @@ app.*.map.json
 .env
 /.env
 
-#
+#firebase
+/.firebase/
+./firebase.json
+.firebaserc
+
+.metadata
