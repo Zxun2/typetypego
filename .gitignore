@@ -50,11 +50,8 @@ app.*.map.json
 
 # general env
 .env
-/.env
 
 #firebase
-/.firebase/
-./firebase.json
+.firebase/
+.firebase.json
 .firebaserc
-
-.metadata
