@@ -192,7 +192,7 @@ io.on('connection', (socket) => {
 });
 
 const startGameClock = async (gameID) => {
-  time = 10;
+  time = 60;
   let game = await Game.findById(gameID);
   game.startTime = new Date().getTime();
   game = await game.save();
