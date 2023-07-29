@@ -28,4 +28,15 @@ class GameStateProvider extends ChangeNotifier {
     );
     notifyListeners();
   }
+
+  void resetState() {
+    _gameState = GameState(
+      id: '',
+      players: [],
+      isJoin: true,
+      words: [],
+      isOver: false,
+    );
+    notifyListeners();
+  }
 }

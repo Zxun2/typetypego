@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:typetypego/providers/game_state_provider.dart';
 import 'package:typetypego/utils/socket_methods.dart';
 import 'package:typetypego/widgets/custom_button.dart';
 import 'package:typetypego/widgets/custom_textfield.dart';
@@ -58,9 +60,12 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                 height: size.height * 0.03,
               ),
               CustomButton(
-                text: "Create",
-                onTap: () => _socketMethods.createGame(nameController.text),
-              )
+                  text: "Create",
+                  onTap: () {
+                    Provider.of<GameStateProvider>(context, listen: false)
+                        .resetState();
+                    _socketMethods.createGame(nameController.text);
+                  })
             ],
           ),
         ),

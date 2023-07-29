@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:typetypego/models/typing_state.dart';
 import 'package:typetypego/providers/game_state_provider.dart';
 import 'package:typetypego/theme/theme_data.dart';
+import 'package:typetypego/utils/socket_client.dart';
 import 'package:typetypego/utils/socket_methods.dart';
 import 'package:typetypego/widgets/input_listener.dart';
 import 'package:typetypego/widgets/scoreboard.dart';
@@ -13,7 +14,9 @@ import 'package:typetypego/widgets/word_generator.dart';
 
 class Sentence extends StatefulWidget {
   final List<dynamic> words;
-  Sentence({Key? key, required this.words}) : super(key: key) {
+  final Function onRestart;
+  Sentence({Key? key, required this.words, required this.onRestart})
+      : super(key: key) {
     WordGenerator.initializeWordList(words);
   }
 
@@ -22,9 +25,15 @@ class Sentence extends StatefulWidget {
 }
 
 class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
-  final FocusNode focusNode = FocusNode();
+  late TypingContext typingContext = TypingContext(0, wordListType);
   final SocketMethods _socketMethods = SocketMethods();
+  WordListType wordListType = WordListType.top100;
+  final FocusNode focusNode = FocusNode();
   int currentWordIndex = 0;
+
+  Timer? cursorResetTimer;
+  var currPlayer = {};
+  bool isTestEnabled = true;
 
   static const Duration cursorFadeDuration = Duration(milliseconds: 750);
   late final AnimationController cursorAnimation = AnimationController(
@@ -32,20 +41,20 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
     duration: const Duration(milliseconds: 500),
   );
 
-  // Settings
-  WordListType wordListType = WordListType.top100;
-
-  // Test-specific variables
-  late TypingContext typingContext = TypingContext(0, wordListType);
-
-  Timer? cursorResetTimer;
-  bool isTestEnabled = true;
-
   @override
   void initState() {
     super.initState();
     cursorAnimation.repeat(reverse: true);
     _socketMethods.updateGame(context);
+
+    Provider.of<GameStateProvider>(context, listen: false)
+        .gameState['players']
+        .forEach((player) {
+      if (player['socketID'] == SocketClient.instance.socket!.id) {
+        currPlayer = player;
+      }
+    });
+
     refreshTypingContext();
   }
 
@@ -68,15 +77,20 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
     });
   }
 
+  void restartGame(game) {
+    widget.onRestart(game);
+    refreshTypingContext();
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isCurrentWordWrong =
         !typingContext.currentWord.startsWith(typingContext.enteredText);
-    final gameData = Provider.of<GameStateProvider>(context);
+    final game = Provider.of<GameStateProvider>(context);
 
     return InputListener(
       focusNode: focusNode,
-      enabled: !gameData.gameState['isOver'],
+      enabled: !game.gameState['isOver'],
       onSpacePressed: () {
         setState(() {
           bool isEnd = typingContext.onSpacePressed();
@@ -90,10 +104,11 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
           }
           resetCursor();
         });
+
         _socketMethods.sendUserInput(
           currentWordIndex,
           typingContext.getTypedWordCount(),
-          gameData.gameState["id"],
+          game.gameState["id"],
         );
       },
       onCtrlBackspacePressed: () {
@@ -101,7 +116,7 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
           _socketMethods.sendUserInput(
             typingContext.currentWordIndex,
             typingContext.getTypedWordCount(),
-            gameData.gameState["id"],
+            game.gameState["id"],
           );
 
           setState(() {
@@ -114,7 +129,7 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
           _socketMethods.sendUserInput(
             typingContext.currentWordIndex,
             typingContext.getTypedWordCount(),
-            gameData.gameState["id"],
+            game.gameState["id"],
           );
 
           setState(() {
@@ -171,7 +186,7 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
                       ),
                       Positioned.fill(
                         child: AnimatedOpacity(
-                          opacity: !gameData.gameState['isOver'] ? 0 : 1,
+                          opacity: !game.gameState['isOver'] ? 0 : 1,
                           duration: const Duration(milliseconds: 300),
                           child: Container(
                             height: 300,
@@ -185,6 +200,37 @@ class _Sentence extends State<Sentence> with SingleTickerProviderStateMixin {
                       ),
                     ],
                   ),
+                  if (game.gameState["isOver"]) ...{
+                    Wrap(
+                      spacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.end,
+                      children: [
+                        if (currPlayer['isPartyLeader'])
+                          OutlinedButton.icon(
+                            onPressed: () => restartGame(game),
+                            icon: const Icon(Icons.restart_alt_rounded),
+                            label: const Text(
+                              "Restart",
+                              style: TextStyle(
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        // OutlinedButton.icon(
+                        //   onPressed: () {
+                        //     Navigator.pushtNamed(context, '/');
+                        //   },
+                        //   icon: const Icon(Icons.home),
+                        //   label: const Text(
+                        //     "Go back to Home",
+                        //     style: TextStyle(
+                        //       fontSize: 15,
+                        //     ),
+                        //   ),
+                        // ),
+                      ],
+                    )
+                  }
                 ],
               ),
             ],

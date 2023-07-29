@@ -45,8 +45,7 @@ class SocketMethods {
       );
 
       if (data['_id'].isNotEmpty && !_isPlaying) {
-        Navigator.pushNamedAndRemoveUntil(
-            context, '/game-screen', (route) => true);
+        Navigator.pushNamed(context, '/game-screen');
         _isPlaying = true;
       }
     });
@@ -103,6 +102,28 @@ class SocketMethods {
         isOver: data['isOver'],
       );
     });
+  }
+
+  leaveGame(gameID) {
+    _client.off('timer');
+    _client.off('update-game-state');
+    _client.off('done');
+
+    _client.emit(
+      'leave-game',
+      {
+        'gameID': gameID,
+      },
+    );
+  }
+
+  done(gameID) {
+    _client.emit(
+      'done',
+      {
+        'gameID': gameID,
+      },
+    );
   }
 
   gameFinishedListener() {

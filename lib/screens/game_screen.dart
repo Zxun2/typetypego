@@ -19,10 +19,12 @@ class _GameScreenState extends State<GameScreen> {
   final SocketMethods _socketMethods = SocketMethods();
   bool showBtn = true;
   var currPlayer = {};
+  late String gameId;
 
   @override
   void initState() {
     super.initState();
+
     _socketMethods.updateTimer(context);
     _socketMethods.updateGame(context);
     _socketMethods.gameFinishedListener();
@@ -34,6 +36,17 @@ class _GameScreenState extends State<GameScreen> {
         currPlayer = player;
       }
     });
+
+    gameId =
+        Provider.of<GameStateProvider>(context, listen: false).gameState['id'];
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    if (gameId.isNotEmpty) {
+      _socketMethods.leaveGame(gameId);
+    }
   }
 
   startGame(GameStateProvider game) {
@@ -43,10 +56,9 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
-  restartGame(GameStateProvider game) {
+  void restartGame(GameStateProvider game) {
     _socketMethods.updateTimer(context);
     _socketMethods.restartTimer(game.gameState['id']);
-    // _socketMethods.startTimer(currPlayer['_id'], game.gameState['id']);
   }
 
   @override
@@ -73,7 +85,7 @@ class _GameScreenState extends State<GameScreen> {
                       Navigator.pushNamed(context, '/');
                     },
                     child: const Text(
-                      "Restart",
+                      "Go back to home page",
                       style: TextStyle(
                         fontSize: 15,
                       ),
@@ -85,6 +97,8 @@ class _GameScreenState extends State<GameScreen> {
           ))
         : Consumer<GameStateProvider>(
             builder: (context, game, child) {
+              gameId = game.gameState['id'];
+
               return Scaffold(
                 body: SafeArea(
                   child: Center(
@@ -224,7 +238,9 @@ class _GameScreenState extends State<GameScreen> {
                           )
                         },
                         if (!game.gameState["isJoin"]) ...{
-                          Sentence(words: game.gameState["words"])
+                          Sentence(
+                              words: game.gameState["words"],
+                              onRestart: (game) => restartGame(game))
                         },
                         if (currPlayer['isPartyLeader'] && showBtn) ...{
                           const SizedBox(height: 30),
@@ -246,34 +262,6 @@ class _GameScreenState extends State<GameScreen> {
                             ),
                           ),
                         },
-                        if (currPlayer['isPartyLeader'] &&
-                            game.gameState["isOver"]) ...{
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              OutlinedButton(
-                                onPressed: () => restartGame(game),
-                                child: const Text(
-                                  "Restart",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                              OutlinedButton(
-                                onPressed: () {
-                                  Navigator.pushNamed(context, '/');
-                                },
-                                child: const Text(
-                                  "Go back to Home",
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        }
                       ],
                     ),
                   ),

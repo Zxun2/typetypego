@@ -16,6 +16,7 @@ app.use(express.json()); // for parsing application/json
 const db = process.env.DATABASE;
 
 let timerId;
+let time;
 
 io.on('connection', (socket) => {
   socket.on('create-game', async ({ nickname }) => {
@@ -30,6 +31,8 @@ io.on('connection', (socket) => {
       };
       game.players.push(player);
       game = await game.save();
+
+      console.log('Game created.');
 
       const gameId = game._id.toString();
       // joins the game room
@@ -68,9 +71,30 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('leave-game', async ({ gameID }) => {
+    try {
+      let game = await Game.findById(gameID);
+      if (!game.isOver) {
+        game.players.forEach((p) => {
+          if (p.socketID === socket.id) {
+            game.players.pull(p);
+          }
+        });
+        await game.save();
+        io.to(gameID).emit('update-game-state', game);
+      }
+    } catch (e) {
+      console.log(e);
+    }
+  });
+
   socket.on('restart-timer', async ({ gameID }) => {
     try {
       let game = await Game.findById(gameID);
+
+      console.log('Resetting game...');
+
+      // reset game
       const sentence = await getSentence();
       game.sentence = sentence;
       game.isOver = false;
@@ -80,9 +104,10 @@ io.on('connection', (socket) => {
         p.currentWordIndex = 0;
       });
 
-      game.startTime = game = await game.save();
+      game.startTime = new Date().getTime();
+      await game.save();
       await startGameClock(gameID);
-      io.to(gameID).emit('update-game', game);
+      io.to(gameID).emit('update-game-state', game);
     } catch (e) {
       console.log(e);
     }
@@ -90,17 +115,16 @@ io.on('connection', (socket) => {
 
   socket.on('timer', async ({ playerId, gameID }) => {
     let game;
-    let player;
     let countDown = 5;
 
     console.log('Start countdown timer.');
 
     try {
       game = await Game.findById(gameID);
-      player = game.players.id(playerId);
     } catch (e) {
       socket.emit('error', e.message);
     }
+    clearInterval(timerId);
 
     // only the party leader can start the game
     let timer = setInterval(async () => {
@@ -114,12 +138,11 @@ io.on('connection', (socket) => {
       } else {
         game.isJoin = false;
         await game.save();
-        await startGameClock(gameID);
-
-        io.to(gameID).emit('update-game-state', game);
-
-        // stop the timer
-        clearInterval(timer);
+        await startGameClock(gameID).then(() => {
+          io.to(gameID).emit('update-game-state', game);
+          // stop the timer
+          clearInterval(timer);
+        });
       }
     }, 1000);
   });
@@ -133,42 +156,48 @@ io.on('connection', (socket) => {
       player.currentWordIndex = currentWordIndex;
       player.typedWords = typedWordCount;
 
-      if (player.currentWordIndex < game.words.length) {
-        await game.save();
-        io.to(gameID).emit('update-game-state', game);
-      } else {
-        let endTime = new Date().getTime();
-        let startTime = game.startTime;
-        console.log('Computing WPM for player...');
-        player.WPM = calculateWPM(endTime, startTime, typedWordCount);
+      if (time >= 0) {
+        if (player.currentWordIndex < game.words.length) {
+          console.log('ping!');
+          game = await game.save();
+          console.log(`Saving game... ${game}`);
+          io.to(gameID).emit('update-game-state', game);
+        } else {
+          let endTime = new Date().getTime();
+          let startTime = game.startTime;
+          console.log('Computing WPM for player...');
+          player.WPM = calculateWPM(endTime, startTime, typedWordCount);
 
-        // check if all players have their wpm calculated
-        isOver = true;
-        game.players.forEach((player) => {
-          if (player.WPM === -1) {
-            isOver = false;
+          // check if all players have their wpm calculated
+          isOver = true;
+          game.players.forEach((player) => {
+            if (player.WPM === -1) {
+              isOver = false;
+            }
+          });
+
+          if (isOver) {
+            console.log('All players have finished. Game over.');
+            game.isOver = true;
           }
-        });
 
-        if (isOver) {
-          console.log('All players have finished. Game over.');
-          game.isOver = true;
+          game = await game.save();
+          isOver ? io.to(gameID).emit('done') : socket.emit('done');
+          clearInterval(timerId);
+          io.to(gameID).emit('update-game-state', game);
         }
-
-        await game.save();
-        isOver ? io.to(gameID).emit('done') : socket.emit('done');
-        clearInterval(timerId);
-        io.to(gameID).emit('update-game-state', game);
       }
     }
   });
 });
 
 const startGameClock = async (gameID) => {
-  let time = 10;
+  time = 10;
   let game = await Game.findById(gameID);
   game.startTime = new Date().getTime();
   game = await game.save();
+
+  console.log('Starting game clock.');
 
   timerId = setInterval(() => {
     if (time >= 0) {
@@ -191,6 +220,7 @@ const startGameClock = async (gameID) => {
             }
           });
           game = await game.save();
+          console.log(`Saving game... ${game}`);
           io.to(gameID).emit('done');
           io.to(gameID).emit('update-game-state', game);
           clearInterval(timerId);
